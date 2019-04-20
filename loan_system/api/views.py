@@ -1,14 +1,34 @@
+import json
+from pprint import pprint as pp
+
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Loan
-from .serializers import LoanSerializer
+
+@api_view(['POST'])
+def MakeLoan(request):
+    # Recebi as informações do usuário
+    payload = json.loads(request.body)
+    pp(payload)
+    r = payload['rate'] / 12
+    installment = round((r + r / ((1 + r) ** payload['term'] - 1)) * payload['amount'], 2)
+
+    loan_id = '{:08d}'.format(payload['id'])
+    pp(payload)
+
+    # Salvar no banco de dados
+    # loan = Loan(loan_id=,
+    #             amount=,
+    #             rate=,
+    #             date_start=,
+    #             date_end=)
 
 
-@api_view(['GET', 'POST'])
-def ListPayment(request):
-    return_object = Loan.objects.all()
-    serializer = LoanSerializer(return_object, many=True)
 
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(installment, status=status.HTTP_200_OK)
+
+
+
+
+

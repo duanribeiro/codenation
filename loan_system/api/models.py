@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Loan(models.Model):
-    id = models.CharField(max_length=18, primary_key=True)
+    loan_id = models.CharField(max_length=18, default=None)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     rate = models.DecimalField(max_digits=3, decimal_places=2)
     date_start = models.DateField()
