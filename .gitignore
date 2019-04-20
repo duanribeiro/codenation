@@ -98,3 +98,4 @@ ENV/
 .ropeproject
 
 .vscode/
+*.sqlite3*
