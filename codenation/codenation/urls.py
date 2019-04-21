@@ -23,6 +23,7 @@ urlpatterns = [
     path('loans/', views.LoanAPI.as_view()),
     path('loans/<uuid:loan_id>/', views.LoanDetailAPI.as_view()),
     path('loans/<uuid:loan_id>/payments', views.LoanPaymentApi.as_view()),
+    path('loans/<uuid:loan_id>/balance', views.LoanPaymentBalanceApi.as_view()),
     path('admin/', admin.site.urls),
 ]
 

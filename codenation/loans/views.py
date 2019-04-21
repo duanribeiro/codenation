@@ -1,8 +1,10 @@
 from loans.models import Loan, LoanPayment
 from loans.serializers import LoanSerializer, LoanDetailSerializer, \
-    LoanPaymentSerializer, LoanPaymentDetailSerializer
+    LoanPaymentSerializer, LoanPaymentDetailSerializer, \
+    LoanPaymentBalanceSerializer
 
 from django.shortcuts import get_object_or_404
+from django.db.models import Sum
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -92,3 +94,23 @@ class LoanPaymentApi(APIView):
             )
             return Response(LoanPaymentDetailSerializer(payment).data, status=status.HTTP_201_CREATED)
         return Response(payment_order.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoanPaymentBalanceApi(APIView):
+    def _get_loan(self, loan_id):
+        return get_object_or_404(Loan, loan_id=loan_id)
+    
+    def _get_paid_loan_amount(self, loan, date):
+        paid_loan = LoanPayment.objects.filter(loan=loan) \
+            .exclude(payment_date__gte=date) \
+            .aggregate(paid_amount=Sum('payment_amount'))['paid_amount']
+        return paid_loan or 0
+
+    def post(self, request, loan_id, format=None):
+        loan = self._get_loan(loan_id)
+        data = LoanPaymentBalanceSerializer(request.data).data
+        paid_amount = self._get_paid_loan_amount(loan, data['date'])
+        return Response({
+                'balance': (loan.payment_amount * loan.amount_of_payments) - paid_amount
+                },
+                status=status.HTTP_201_CREATED)

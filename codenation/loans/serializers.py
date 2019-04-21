@@ -70,3 +70,7 @@ class LoanDetailSerializer(LoanSerializer, DynamicFieldsModelSerializer):
     class Meta:
         model = Loan
         fields = ('loan_id', 'payment_amount',) + LoanSerializer.Meta.fields + ('payments',)
+
+
+class LoanPaymentBalanceSerializer(serializers.Serializer):
+    date = serializers.DateTimeField()
