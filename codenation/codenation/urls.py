@@ -15,10 +15,15 @@ Including another URLconf
 """
 from loans import views
 
+from rest_framework.urlpatterns import format_suffix_patterns
 from django.contrib import admin
 from django.urls import path
 
 urlpatterns = [
     path('loans/', views.LoanAPI.as_view()),
+    path('loans/<uuid:loan_id>/', views.LoanDetailAPI.as_view()),
+    path('loans/<uuid:loan_id>/payments', views.LoanPaymentApi.as_view()),
     path('admin/', admin.site.urls),
 ]
+
+urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json',])
