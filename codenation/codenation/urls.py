@@ -18,13 +18,24 @@ from loans import views
 from rest_framework.urlpatterns import format_suffix_patterns
 from django.contrib import admin
 from django.urls import path
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title='Loans API',
+        default_version='v1',
+        description='API to create and pay loans',
+    ),
+    public=False,
+)
 
 urlpatterns = [
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('loans/', views.LoanAPI.as_view()),
     path('loans/<uuid:loan_id>/', views.LoanDetailAPI.as_view()),
-    path('loans/<uuid:loan_id>/payments', views.LoanPaymentApi.as_view()),
-    path('loans/<uuid:loan_id>/balance', views.LoanPaymentBalanceApi.as_view()),
+    path('loans/<uuid:loan_id>/payments/', views.LoanPaymentApi.as_view()),
+    path('loans/<uuid:loan_id>/balance/', views.LoanPaymentBalanceApi.as_view()),
     path('admin/', admin.site.urls),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json',])
