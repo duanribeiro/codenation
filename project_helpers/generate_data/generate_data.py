@@ -1,0 +1,75 @@
+import os
+import json
+import pytz
+
+from uuid import uuid4
+from random import random, randrange
+from datetime import datetime, timedelta
+
+from classes import Loan, LoanPayment, BasicData
+
+
+class JsonHelper(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, BasicData):
+            return obj.__dict__()
+        if isinstance(obj, datetime):
+            return str(obj)
+        return json.JSONEncoder.default(obj)
+
+
+def _make_date():
+    year = 2019
+    month = randrange(1, 13)
+    day = randrange(1, 31) if month != 2 else randrange(1, 29)
+    hour, minute, seconds = randrange(0, 23), randrange(0, 59), randrange(0, 59)
+    return datetime(year, month, day, hour, minute, seconds, tzinfo=pytz.UTC)
+
+def _calculate_payment_amount(loan):
+    rate = loan.fields['interest_rate'] / 12
+    return (rate + rate / ((1 + rate) **loan.fields['amount_of_payments'] - 1)) * loan.fields['amount']
+
+def generate_loans(number_of_loans):
+    loans = []
+    for _ in range(number_of_loans):
+        loan = Loan(
+            pk=str(uuid4()),
+            fields={
+                'amount': random() * randrange(start=10, stop=1001, step=10),
+                'amount_of_payments': randrange(1, 15),
+                'interest_rate': randrange(10, 101) / 100,
+                'requested_date': _make_date(),
+            }
+        )
+        loan.fields['payment_amount'] = _calculate_payment_amount(loan)
+        loans.append(loan)
+    return loans
+
+def generate_loans_payments(loans):
+    loan_payments = []
+    for loan in loans:
+        number_of_payments = randrange(1, loan.fields['amount_of_payments']
+        for payment_number in range(1, number_of_payments + 1)):
+            loan_payment = LoanPayment(
+                pk=str(uuid4()),
+                fields={
+                    'payment_number': payment_number,
+                    'payment_type': 'made' if randrange(1, 3) % 2 == 0 else 'missed',
+                    'payment_date': loan.fields['requested_date'] + timedelta(days=30 * payment_number),
+                    'payment_amount': loan.fields['payment_amount'],
+                    'loan': loan.pk,
+                    'created_at': loan.fields['requested_date'] + timedelta(days=30 * payment_number),
+                }
+            )
+            loan_payments.append(loan_payment)
+    return loan_payments
+
+def save_data(path_to_save, data):
+    with open(path_to_save, 'w') as fp:
+        json.dump(data, fp, cls=JsonHelper)
+
+def generate_data(number_of_loans, dir_to_save):
+    loans = generate_loans(number_of_loans)
+    loan_payments = generate_loans_payments(loans)
+    save_data(os.path.join(dir_to_save, 'test_data.json'), loans + loan_payments)
