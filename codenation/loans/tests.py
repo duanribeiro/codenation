@@ -1,4 +1,5 @@
 import json
+import uuid
 from decimal import Decimal
 
 from django.test import TestCase, Client
@@ -9,12 +10,22 @@ from loans.serializers import LoanSerializer
 
 client = Client()
 
+
+def is_valid_uuid(val):
+    try:
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
+
+
 class GetLoanTest(TestCase):
     def test_empty_db(self):
-        response = client.get('http://127.0.0.1:8000/loans/')
+        response = client.get(path='http://localhost:8000/loans/')
 
         self.assertEqual(response.data, [])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
     def test_one_loan(self):
         payload = {
@@ -23,14 +34,19 @@ class GetLoanTest(TestCase):
             "rate": 0.5,
             "date": "2019-05-09 03:18Z"
         }
-        client.post('http://127.0.0.1:8000/loans/', data=json.dumps(payload), content_type="application/json")
+        response = client.post(path='http://localhost:8000/loans/',
+                               data=json.dumps(payload),
+                               content_type="application/json")
         loan = Loan.objects.first()
         serializer = LoanSerializer(loan)
+
+        self.assertEqual(is_valid_uuid(response.data['id']), True)
+        self.assertEqual(response.data['installment'], Decimal('333.5539'))
 
         self.assertEqual(serializer.data['amount'], '5000.00')
         self.assertEqual(serializer.data['term'], 24)
         self.assertEqual(serializer.data['rate'], '0.500')
-        self.assertEqual(serializer.data['date'], '2019-05-09T03:18:00Z')
+
 
     def test_two_or_more_loan(self):
         for i in range(9):
@@ -40,8 +56,40 @@ class GetLoanTest(TestCase):
                 "rate": i * 1,
                 "date": f'2019-01-0{i} 03:18Z'
             }
-            client.post('http://127.0.0.1:8000/loans/', data=json.dumps(payload), content_type="application/json")
+            response = client.post(path='http://localhost:8000/loans/',
+                                   data=json.dumps(payload),
+                                   content_type="application/json")
 
-        loan = Loan.objects.filter(amount__gte=Decimal("100"))
+        self.assertEqual(is_valid_uuid(response.data['id']), True)
+        loan = Loan.objects.all().filter(amount__gte=Decimal('100'))
         serializer = LoanSerializer(loan, many=True)
         self.assertGreaterEqual(serializer.data[0]['amount'], '100.00')
+
+        loan = loan.filter(interest_rate__lte=Decimal('3'))
+        serializer = LoanSerializer(loan, many=True)
+        self.assertLessEqual(Decimal(serializer.data[2]['rate']), 3)
+
+        loan = loan.filter(amount=200)
+        serializer = LoanSerializer(loan, many=True)
+        self.assertEqual(serializer.data[0]['amount'], '200.00')
+
+
+    def test_wrong_inputs(self):
+        payload = {
+            "amount": "%¨&%&",
+            "term": "%¨&%&",
+            "rate": "%¨&%&",
+            "date": "%¨&%&",
+        }
+        response = client.post(path='http://localhost:8000/loans/',
+                               data=json.dumps(payload),
+                               content_type="application/json")
+
+        self.assertEqual(response.data['amount'][0], 'A valid number is required.')
+        self.assertEqual(response.data['term'][0], 'A valid integer is required.')
+        self.assertEqual(response.data['rate'][0], 'A valid number is required.')
+        self.assertEqual(response.data['date'][0], 'Datetime has wrong format.'
+        ' Use one of these formats instead: YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].')
+
+
+
