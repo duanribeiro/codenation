@@ -1,3 +1,5 @@
+import json
+
 from loans.models import Loan, LoanPayment
 from loans.serializers import LoanSerializer, LoanDetailSerializer, \
     LoanPaymentSerializer, LoanPaymentDetailSerializer, \
@@ -8,9 +10,19 @@ from django.db.models import Sum
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class LoanAPI(APIView):
+    @swagger_auto_schema(
+        security=[],
+        operation_description='Retrive all existing loans',
+        operation_id='GET /loans',
+        responses={
+            200: LoanDetailSerializer(fields=('loan_id', 'amount', 'term',), many=True)
+        },
+    )
     def get(self, request, format=None):
         loans = Loan.objects.all()
         serializer = LoanDetailSerializer(
@@ -20,6 +32,31 @@ class LoanAPI(APIView):
         )
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        request_body=LoanSerializer(),
+        security=[],
+        operation_description='Create a loan',
+        operation_id='POST /loans',
+        responses={
+            201: openapi.Response(
+                    description='Loan has been created',
+                    examples={
+                        'created': json.dumps({
+                            'id': openapi.TYPE_STRING,
+                            'installment': openapi.TYPE_NUMBER
+                            }
+                        )
+                    }
+                ),
+            400: openapi.Response(
+                description='Fields are invalid',
+                examples={
+                    'field_required': json.dumps([{'field': 'This field is required'}]),
+                    'field_wrong': json.dumps([{'field': 'Reason of the error'}])
+                }
+            )
+        }
+    )
     def post(self, request, format=None):
         loan_order = LoanSerializer(data=request.data)
         if loan_order.is_valid():
@@ -34,6 +71,20 @@ class LoanAPI(APIView):
 
 
 class LoanDetailAPI(APIView):
+    @swagger_auto_schema(
+        security=[],
+        operation_description='Retrive loan with its details',
+        operation_id='GET /loans/{loan_id}',
+        responses={
+            200: LoanDetailSerializer(),
+            404: openapi.Response(
+                description='Loan not found',
+                examples={
+                    'not_found': json.dumps({'detail': 'Not Found.'})
+                }
+            )
+        }
+    )
     def get(self, request, loan_id, format=None):
         loan = get_object_or_404(Loan, loan_id=loan_id)
         return Response(LoanDetailSerializer(loan).data)
@@ -75,10 +126,33 @@ class LoanPaymentApi(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+    @swagger_auto_schema(
+        security=[],
+        operation_description='Retrive payments from a especific loan',
+        operation_id='GET /loans/{loan_id}/payments',
+        responses={
+            200: LoanPaymentDetailSerializer(many=True)
+        }
+    )
     def get(self, request, loan_id, format=None):
         loan_payments = self._get_loan_payments(loan_id)
         return Response(LoanPaymentDetailSerializer(loan_payments, many=True).data)
 
+    @swagger_auto_schema(
+        security=[],
+        operation_description='Crete Loan Payment',
+        operation_id='POST /loans/{loan_id}',
+        responses={
+            201: LoanPaymentDetailSerializer(),
+            400: openapi.Response(
+                description='Fields are invalid',
+                examples={
+                    'field_required': json.dumps([{'field': 'This field is required'}]),
+                    'field_wrong': json.dumps([{'field': 'Reason of the error'}])
+                }
+            )
+        }
+    )
     def post(self, request, loan_id, format=None):
         payment_order = LoanPaymentSerializer(data=request.data)
         if payment_order.is_valid():
@@ -106,6 +180,26 @@ class LoanPaymentBalanceApi(APIView):
             .aggregate(paid_amount=Sum('payment_amount'))['paid_amount']
         return paid_loan or 0
 
+    @swagger_auto_schema(
+        security=[],
+        operation_description='Crete Loan Payment',
+        operation_id='POST /loans/{loan_id}/balance',
+        request_body=LoanPaymentBalanceSerializer(),
+        responses={
+            201: openapi.Response(
+                description='Loan Payments\' balance',
+                examples={
+                    'balance': json.dumps({'balance': openapi.TYPE_NUMBER})
+                }
+            ),
+            404: openapi.Response(
+                description='Loan not found',
+                examples={
+                    'not_found': json.dumps({'detail': 'Not Found.'})
+                }
+            )
+        }
+    )
     def post(self, request, loan_id, format=None):
         loan = self._get_loan(loan_id)
         data = LoanPaymentBalanceSerializer(request.data).data
