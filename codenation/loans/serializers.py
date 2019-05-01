@@ -25,7 +25,7 @@ class DynamicFieldsModelSerializer(serializers.ModelSerializer):
 
 class LoanSerializer(serializers.ModelSerializer):
 
-    amount = serializers.DecimalField(max_digits=16, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=18, decimal_places=6)
     term = serializers.IntegerField(source='amount_of_payments')
     rate = serializers.DecimalField(max_digits=4, decimal_places=3, source='interest_rate')
     date = serializers.DateTimeField(source='requested_date')
@@ -36,7 +36,7 @@ class LoanSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         loan = Loan(**validated_data)
-        loan.payment_amount = round(self.__calculate_payment_amount(loan), 4)
+        loan.payment_amount = round(self.__calculate_payment_amount(loan), 6)
         loan.save()
         return loan
 
@@ -49,7 +49,7 @@ class LoanPaymentSerializer(serializers.ModelSerializer):
 
     payment = serializers.CharField(source='payment_type')
     date = serializers.DateTimeField(source='payment_date')
-    amount = serializers.DecimalField(max_digits=16, decimal_places=2, source='payment_amount')
+    amount = serializers.DecimalField(max_digits=18, decimal_places=6, source='payment_amount')
 
     class Meta:
         model = LoanPayment

@@ -6,8 +6,8 @@ from django.db import models
 class Loan(models.Model):
 
     loan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    amount = models.DecimalField(max_digits=16, decimal_places=2)
-    payment_amount = models.DecimalField(max_digits=16, decimal_places=2)
+    amount = models.DecimalField(max_digits=18, decimal_places=6)
+    payment_amount = models.DecimalField(max_digits=18, decimal_places=6)
     amount_of_payments = models.IntegerField()
     interest_rate = models.DecimalField(max_digits=4, decimal_places=3)
     requested_date = models.DateTimeField()
@@ -27,7 +27,7 @@ class LoanPayment(models.Model):
     payment_number = models.IntegerField()
     payment_type = models.CharField(max_length=7)
     payment_date = models.DateTimeField()
-    payment_amount = models.DecimalField(max_digits=16, decimal_places=2)
+    payment_amount = models.DecimalField(max_digits=18, decimal_places=6)
     loan = models.ForeignKey(
         Loan,
         on_delete=models.CASCADE,
