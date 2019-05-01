@@ -74,7 +74,7 @@ class LoanTest(TestCase):
         self.assertEqual(serializer.data[0]['amount'], '200.00')
 
 
-    def test_wrong_inputs(self):
+    def test_wrong_inputs_loan(self):
         payload = {
             "amount": "%¨&%&",
             "term": "%¨&%&",
@@ -134,7 +134,6 @@ class PaymentTest(TestCase):
         response_loan = client.post(path='http://localhost:8000/loans/',
                                     data=json.dumps(payload_loan),
                                     content_type="application/json")
-
         payload_payment = {
             "payment": "made",
             "date": "2019-05-07 04:18Z",
@@ -152,5 +151,26 @@ class PaymentTest(TestCase):
             self.assertEqual(response_payment.data['loan'], response_loan.data["id"])
 
 
+
+    def test_wrong_inputs_payments(self):
+        payload_loan = {
+            "amount": 1000,
+            "term": 10,
+            "rate": 1,
+            "date": "2019-05-09 03:18Z"
+        }
+        response_loan = client.post(path='http://localhost:8000/loans/',
+                                    data=json.dumps(payload_loan),
+                                    content_type="application/json")
+        payload_payment = {
+            "payment": "%¨&%&",
+            "date": "%¨&%&",
+            "amount": "%¨&%&"
+        }
+        response_payment = client.post(path=f'http://localhost:8000/loans/{response_loan.data["id"]}/payments',
+                                       data=json.dumps(payload_payment),
+                                       content_type="application/json")
+
+        self.assertEqual(response_payment.data['amount'][0], 'A valid number is required.')
 
 
