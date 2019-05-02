@@ -49,7 +49,7 @@ def generate_loans(number_of_loans):
 def generate_loans_payments(loans):
     loan_payments = []
     for loan in loans:
-        number_of_payments = randrange(1, loan.fields['amount_of_payments'])
+        number_of_payments = randrange(0, loan.fields['amount_of_payments'])
         for payment_number in range(1, number_of_payments + 1):
             loan_payment = LoanPayment(
                 pk=str(uuid4()),

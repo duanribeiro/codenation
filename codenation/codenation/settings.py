@@ -133,3 +133,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Django Rest Framework Configuration
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'codenation.utils.pagination.BasicPagination',
+    'PAGE_SIZE': 50,
+}
