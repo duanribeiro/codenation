@@ -10,6 +10,7 @@ from django.db.models import Sum
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -24,13 +25,15 @@ class LoanAPI(APIView):
         },
     )
     def get(self, request, format=None):
-        loans = Loan.objects.all()
-        serializer = LoanDetailSerializer(
-            loans,
-            fields=('loan_id', 'amount', 'term',),
-            many=True
+        paginator = api_settings.DEFAULT_PAGINATION_CLASS()
+        return paginator.get_paginated_response(
+            queryset=Loan.objects.all(),
+            request=request,
+            serializer=LoanDetailSerializer,
+            serializer_kwargs={
+                'fields': ('loan_id', 'amount', 'term',)
+            }
         )
-        return Response(serializer.data)
     
     @swagger_auto_schema(
         request_body=LoanSerializer(),
