@@ -20,8 +20,28 @@ class LoanAPI(APIView):
         security=[],
         operation_description='Retrive all existing loans',
         operation_id='GET /loans',
+        manual_parameters=[
+            openapi.Parameter(name='page', in_=openapi.IN_QUERY, default=1,
+                type=openapi.TYPE_INTEGER, description='Page number'),
+            openapi.Parameter(name='page_size', in_=openapi.IN_QUERY, default=50,
+                type=openapi.TYPE_INTEGER, description='Number of page elements'),
+        ],
         responses={
-            200: LoanDetailSerializer(fields=('loan_id', 'amount', 'term',), many=True)
+            status.HTTP_200_OK: openapi.Response(
+                description='Loans list',
+                examples={
+                    'application/json': {
+                        'count': openapi.TYPE_INTEGER,
+                        'next': openapi.TYPE_STRING,
+                        'previous': openapi.TYPE_STRING,
+                        'results': [{
+                            'loan_id': openapi.FORMAT_UUID,
+                            'amount': openapi.TYPE_NUMBER,
+                            'term': openapi.TYPE_INTEGER,
+                        }]
+                    }
+                }
+            )
         },
     )
     def get(self, request, format=None):
@@ -41,21 +61,24 @@ class LoanAPI(APIView):
         operation_description='Create a loan',
         operation_id='POST /loans',
         responses={
-            201: openapi.Response(
+            status.HTTP_201_CREATED: openapi.Response(
                     description='Loan has been created',
                     examples={
-                        'created': json.dumps({
-                            'id': openapi.TYPE_STRING,
+                        'application/json': {
+                            'id': openapi.FORMAT_UUID,
                             'installment': openapi.TYPE_NUMBER
-                            }
-                        )
+                        }
                     }
                 ),
-            400: openapi.Response(
+            status.HTTP_400_BAD_REQUEST: openapi.Response(
                 description='Fields are invalid',
                 examples={
-                    'field_required': json.dumps([{'field': 'This field is required'}]),
-                    'field_wrong': json.dumps([{'field': 'Reason of the error'}])
+                    'application/json_required': [{
+                        'field': 'This field is required'
+                    }],
+                    'application/json_wrong': [{
+                        'field': 'Reason of the error'
+                    }]
                 }
             )
         }
@@ -79,11 +102,11 @@ class LoanDetailAPI(APIView):
         operation_description='Retrive loan with its details',
         operation_id='GET /loans/{loan_id}',
         responses={
-            200: LoanDetailSerializer(),
-            404: openapi.Response(
+            status.HTTP_200_OK: LoanDetailSerializer(),
+            status.HTTP_404_NOT_FOUND: openapi.Response(
                 description='Loan not found',
                 examples={
-                    'not_found': json.dumps({'detail': 'Not Found.'})
+                    'application/json': {'detail': 'Not Found.'}
                 }
             )
         }
@@ -134,7 +157,7 @@ class LoanPaymentApi(APIView):
         operation_description='Retrive payments from a especific loan',
         operation_id='GET /loans/{loan_id}/payments',
         responses={
-            200: LoanPaymentDetailSerializer(many=True)
+            status.HTTP_200_OK: LoanPaymentDetailSerializer(many=True)
         }
     )
     def get(self, request, loan_id, format=None):
@@ -142,16 +165,21 @@ class LoanPaymentApi(APIView):
         return Response(LoanPaymentDetailSerializer(loan_payments, many=True).data)
 
     @swagger_auto_schema(
+        request_body=LoanPaymentSerializer(),
         security=[],
         operation_description='Crete Loan Payment',
-        operation_id='POST /loans/{loan_id}',
+        operation_id='POST /loans/{loan_id}/payments',
         responses={
-            201: LoanPaymentDetailSerializer(),
-            400: openapi.Response(
+            status.HTTP_201_CREATED: LoanPaymentDetailSerializer(),
+            status.HTTP_400_BAD_REQUEST: openapi.Response(
                 description='Fields are invalid',
                 examples={
-                    'field_required': json.dumps([{'field': 'This field is required'}]),
-                    'field_wrong': json.dumps([{'field': 'Reason of the error'}])
+                    'application/json_required': [{
+                        'field_name': 'This field is required'
+                    }],
+                    'application/json_wrong': [{
+                        'field_name': 'Reason of the error'
+                    }]
                 }
             )
         }
@@ -189,16 +217,20 @@ class LoanPaymentBalanceApi(APIView):
         operation_id='POST /loans/{loan_id}/balance',
         request_body=LoanPaymentBalanceSerializer(),
         responses={
-            201: openapi.Response(
+            status.HTTP_201_CREATED: openapi.Response(
                 description='Loan Payments\' balance',
                 examples={
-                    'balance': json.dumps({'balance': openapi.TYPE_NUMBER})
+                    'application/json_balance': {
+                        'balance': openapi.TYPE_NUMBER
+                    }
                 }
             ),
-            404: openapi.Response(
+            status.HTTP_404_NOT_FOUND: openapi.Response(
                 description='Loan not found',
                 examples={
-                    'not_found': json.dumps({'detail': 'Not Found.'})
+                    'application/json_not_found': {
+                        'detail': 'Not Found.'
+                    }
                 }
             )
         }
