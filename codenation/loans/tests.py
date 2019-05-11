@@ -26,7 +26,6 @@ class LoanTest(TestCase):
         self.assertEqual(response.data, [])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-
     def test_one_loan(self):
         payload = {
             "amount": 5000,
@@ -46,7 +45,6 @@ class LoanTest(TestCase):
         self.assertEqual(serializer.data['amount'], '5000.00')
         self.assertEqual(serializer.data['term'], 24)
         self.assertEqual(serializer.data['rate'], '0.500')
-
 
     def test_two_or_more_loan(self):
         for i in range(9):
@@ -72,7 +70,6 @@ class LoanTest(TestCase):
         loan = loan.filter(amount=200)
         serializer = LoanSerializer(loan, many=True)
         self.assertEqual(serializer.data[0]['amount'], '200.00')
-
 
     def test_wrong_inputs_loan(self):
         payload = {
@@ -173,4 +170,30 @@ class PaymentTest(TestCase):
 
         self.assertEqual(response_payment.data['amount'][0], 'A valid number is required.')
 
+
+class BalanceTest(TestCase):
+    def test_balance(self):
+        payload_loan = {
+            "amount": 1000,
+            "term": 10,
+            "rate": 1,
+            "date": "2019-05-09 03:18Z"
+        }
+        response_loan = client.post(path='http://localhost:8000/loans/',
+                                    data=json.dumps(payload_loan),
+                                    content_type="application/json")
+        payload_payment = {
+            "payment": "made",
+            "date": "2019-05-07 04:18Z",
+            "amount": round(float(response_loan.data["installment"]), 2)
+        }
+        response_payment = client.post(path=f'http://localhost:8000/loans/{response_loan.data["id"]}/payments',
+                                       data=json.dumps(payload_payment),
+                                       content_type="application/json")
+
+        response_balance = client.post(path=f'http://localhost:8000/loans/{response_loan.data["id"]}/balance')
+
+        self.assertEqual(response_payment.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response_balance.data['balance'], (payload_loan['amount'] * payload_loan['term'])
+                         - payload_payment['amount'])
 
