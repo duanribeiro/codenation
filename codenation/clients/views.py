@@ -92,7 +92,20 @@ class ClientApi(APIView):
 
 
 class ClientDetailApi(APIView):
-
+    @swagger_auto_schema(
+        security=[],
+        operation_description='Retrive client with its details',
+        operation_id='GET /clients/{client_id}',
+        responses={
+            status.HTTP_200_OK: ClientDetailSerializer(),
+            status.HTTP_404_NOT_FOUND: openapi.Response(
+                description='Client not found',
+                examples={
+                    'application/json': {'detail': 'Not Found.'}
+                }
+            )
+        }
+    )
     def get(self, request, client_id, format=None):
         client = get_object_or_404(Client, client_id=client_id)
         return Response(ClientDetailSerializer(client).data)
