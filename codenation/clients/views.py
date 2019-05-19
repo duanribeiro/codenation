@@ -1,5 +1,5 @@
 from clients.models import Client
-from clients.serializers import ClientSerializer
+from clients.serializers import ClientSerializer, ClientDetailSerializer
 
 from rest_framework import status
 from django.shortcuts import render
@@ -11,15 +11,72 @@ from drf_yasg import openapi
 
 
 class ClientApi(APIView):
-
+    @swagger_auto_schema(
+        security=[],
+        operation_description='Retrive all existing clients',
+        operation_id='GET /clients',
+        manual_parameters=[
+            openapi.Parameter(name='page', in_=openapi.IN_QUERY, default=1,
+                type=openapi.TYPE_INTEGER, description='Page number'),
+            openapi.Parameter(name='page_size', in_=openapi.IN_QUERY, default=50,
+                type=openapi.TYPE_INTEGER, description='Number of page elements'),
+        ],
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description='Clients list',
+                examples={
+                    'application/json': {
+                        'count': openapi.TYPE_INTEGER,
+                        'next': openapi.TYPE_STRING,
+                        'previous': openapi.TYPE_STRING,
+                        'results': [{
+                            'client_id': openapi.FORMAT_UUID,
+                            'name': openapi.TYPE_STRING,
+                            'cpf': openapi.TYPE_STRING,
+                        }]
+                    }
+                }
+            )
+        },
+    )
     def get(self, request, format=None):
         paginator = api_settings.DEFAULT_PAGINATION_CLASS()
         return paginator.get_paginated_response(
             queryset=Client.objects.all(),
             request=request,
-            serializer=ClientSerializer,
+            serializer=ClientDetailSerializer,
+            serializer_kwargs={
+                'fields': ('client_id', 'name', 'cpf',)
+            }
         )
     
+    @swagger_auto_schema(
+        request_body=ClientSerializer(),
+        security=[],
+        operation_description='Create a client',
+        operation_id='POST /clients',
+        responses={
+            status.HTTP_201_CREATED: openapi.Response(
+                    description='Client has been created',
+                    examples={
+                        'application/json': {
+                            'client_id': openapi.FORMAT_UUID
+                        }
+                    }
+                ),
+            status.HTTP_400_BAD_REQUEST: openapi.Response(
+                description='Fields are invalid',
+                examples={
+                    'application/json_required': [{
+                        'field': 'This field is required'
+                    }],
+                    'application/json_wrong': [{
+                        'field': 'Reason of the error'
+                    }]
+                }
+            )
+        }
+    )
     def post(self, request, format=None):
         client = ClientSerializer(data=request.data)
         if client.is_valid():
