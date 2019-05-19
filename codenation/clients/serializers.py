@@ -1,9 +1,8 @@
-import re
-
 from clients.models import Client
 from codenation.utils.serializers import DynamicFieldsModelSerializer
-from rest_framework import serializers
 
+from rest_framework import serializers
+from validate_email import validate_email
 from pycpfcnpj import cpfcnpj
 
 
@@ -19,7 +18,7 @@ class ClientSerializer(serializers.ModelSerializer):
         return value
     
     def validate_email(self, value):
-        if re.fullmatch(r'^[-\.\w]+@{1}\w+(\.[a-zA-Z]{1,3}){1,2}$', email):
+        if not validate_email(value):
             raise serializers.ValidationError('Invalid email.')
         return value
 
