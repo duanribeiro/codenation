@@ -46,6 +46,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'loans',
+    'clients',
 ]
 
 INSTALLED_APPS = LOCAL_APPS + THIRD_PARTY_APPS + INSTALLED_APPS
