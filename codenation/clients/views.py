@@ -1,6 +1,7 @@
 from clients.models import Client
 from clients.serializers import ClientSerializer, ClientDetailSerializer
 
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -88,3 +89,10 @@ class ClientApi(APIView):
                 status=status.HTTP_201_CREATED
             )
         return Response(client.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ClientDetailApi(APIView):
+
+    def get(self, request, client_id, format=None):
+        client = get_object_or_404(Client, client_id=client_id)
+        return Response(ClientDetailSerializer(client).data)

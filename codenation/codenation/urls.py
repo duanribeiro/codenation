@@ -39,5 +39,6 @@ urlpatterns = [
     path('loans/<uuid:loan_id>/payments/', loans_views.LoanPaymentApi.as_view()),
     path('loans/<uuid:loan_id>/balance/', loans_views.LoanPaymentBalanceApi.as_view()),
     path('clients/', clients_views.ClientApi.as_view()),
+    path('clients/<uuid:client_id>/', clients_views.ClientDetailApi.as_view()),
     path('admin/', admin.site.urls),
 ]
