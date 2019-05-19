@@ -19,4 +19,4 @@ class Client(models.Model):
         verbose_name_plural = 'Clients'
     
     def __str__(self):
-        return f'{self.surname}, {self.name} - {self.cpf}'
+        return f'{self.client_id}'
