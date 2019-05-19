@@ -22,3 +22,8 @@ class Loan(BasicData):
 class LoanPayment(BasicData):
 
     model = 'loans.loanpayment'
+
+
+class Client(BasicData):
+
+    model = 'clients.client'
