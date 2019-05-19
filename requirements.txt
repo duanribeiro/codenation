@@ -12,6 +12,7 @@ itypes==1.1.0
 Jinja2==2.10.1
 MarkupSafe==1.1.1
 psycopg2-binary==2.8.2
+pycpfcnpj==1.5.1
 pytz==2019.1
 requests==2.21.0
 ruamel.yaml==0.15.94
@@ -19,3 +20,4 @@ six==1.12.0
 sqlparse==0.3.0
 uritemplate==3.0.0
 urllib3==1.24.2
+validate-email==1.3
