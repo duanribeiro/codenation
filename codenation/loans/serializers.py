@@ -9,20 +9,11 @@ class LoanSerializer(serializers.ModelSerializer):
     term = serializers.IntegerField(source='amount_of_payments')
     rate = serializers.DecimalField(max_digits=4, decimal_places=3, source='interest_rate')
     date = serializers.DateTimeField(source='requested_date')
+    client_id = serializers.UUIDField(source='client')
     
     class Meta:
         model = Loan
-        fields = ('amount', 'term', 'rate', 'date',)
-    
-    def create(self, validated_data):
-        loan = Loan(**validated_data)
-        loan.payment_amount = round(self.__calculate_payment_amount(loan), 6)
-        loan.save()
-        return loan
-
-    def __calculate_payment_amount(self, loan):
-        rate = loan.interest_rate / 12
-        return (rate + rate / ((1 + rate) ** loan.amount_of_payments - 1)) * loan.amount
+        fields = ('client_id', 'amount', 'term', 'rate', 'date',)
 
 
 class LoanPaymentSerializer(serializers.ModelSerializer):
