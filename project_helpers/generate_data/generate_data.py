@@ -3,10 +3,10 @@ import json
 import pytz
 
 from uuid import uuid4
-from random import random, randrange
+from random import random, randrange, choice
 from datetime import datetime, timedelta
 
-from classes import Loan, LoanPayment, BasicData
+from classes import Loan, LoanPayment, Client, BasicData
 
 
 class JsonHelper(json.JSONEncoder):
@@ -30,7 +30,7 @@ def _calculate_payment_amount(loan):
     rate = loan.fields['interest_rate'] / 12
     return (rate + rate / ((1 + rate) **loan.fields['amount_of_payments'] - 1)) * loan.fields['amount']
 
-def generate_loans(number_of_loans):
+def generate_loans(number_of_loans, clients):
     loans = []
     for _ in range(number_of_loans):
         loan = Loan(
@@ -40,6 +40,7 @@ def generate_loans(number_of_loans):
                 'amount_of_payments': randrange(1, 15),
                 'interest_rate': randrange(10, 101) / 100,
                 'requested_date': _make_date(),
+                'client': choice(clients).pk,
             }
         )
         loan.fields['payment_amount'] = _calculate_payment_amount(loan)
@@ -65,11 +66,32 @@ def generate_loans_payments(loans):
             loan_payments.append(loan_payment)
     return loan_payments
 
+def create_clients(number_of_clients):
+    clients = []
+    for i in range(number_of_clients):
+        client = Client(
+            pk=str(uuid4()),
+            fields={
+                'name': f'Name{i}',
+                'surname': f'Surname{i}',
+                'email': f'test{i}@gmail.com',
+                'telephone': str(randrange(10000000000, 100000000000)),
+                'cpf': str(randrange(10000000000, 100000000000)),
+                'created_at': _make_date(),
+            }
+        )
+        clients.append(client)
+    return clients
+
 def save_data(path_to_save, data):
     with open(path_to_save, 'w') as fp:
         json.dump(data, fp, cls=JsonHelper)
 
-def generate_data(number_of_loans, dir_to_save):
-    loans = generate_loans(number_of_loans)
+def generate_data(number_of_loans, number_of_clients, dir_to_save):
+    clients = create_clients(number_of_clients)
+    loans = generate_loans(number_of_loans, clients)
     loan_payments = generate_loans_payments(loans)
-    save_data(os.path.join(dir_to_save, 'test_data.json'), loans + loan_payments)
+    save_data(os.path.join(
+        dir_to_save, 'test_data.json'),
+        clients + loans + loan_payments
+    )

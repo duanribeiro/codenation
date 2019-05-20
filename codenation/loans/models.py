@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from clients.models import Client
 
 
 class Loan(models.Model):
@@ -11,9 +12,16 @@ class Loan(models.Model):
     amount_of_payments = models.IntegerField()
     interest_rate = models.DecimalField(max_digits=4, decimal_places=3)
     requested_date = models.DateTimeField()
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='clients',
+        related_query_name='client'
+    )
 
     class Meta:
         db_table = 'loan'
+        ordering = ['loan_id', 'requested_date', ]
         verbose_name = 'Loan'
         verbose_name_plural = 'Loans'
     

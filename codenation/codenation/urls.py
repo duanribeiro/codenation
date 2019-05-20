@@ -13,7 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from loans import views
+from clients import views as clients_views
+from loans import views as loans_views
 
 from rest_framework.urlpatterns import format_suffix_patterns
 from django.contrib import admin
@@ -33,9 +34,11 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('loans/', views.LoanAPI.as_view()),
-    path('loans/<uuid:loan_id>/', views.LoanDetailAPI.as_view()),
-    path('loans/<uuid:loan_id>/payments/', views.LoanPaymentApi.as_view()),
-    path('loans/<uuid:loan_id>/balance/', views.LoanPaymentBalanceApi.as_view()),
+    path('loans/', loans_views.LoanAPI.as_view()),
+    path('loans/<uuid:loan_id>/', loans_views.LoanDetailAPI.as_view()),
+    path('loans/<uuid:loan_id>/payments/', loans_views.LoanPaymentApi.as_view()),
+    path('loans/<uuid:loan_id>/balance/', loans_views.LoanPaymentBalanceApi.as_view()),
+    path('clients/', clients_views.ClientApi.as_view()),
+    path('clients/<uuid:client_id>/', clients_views.ClientDetailApi.as_view()),
     path('admin/', admin.site.urls),
 ]
